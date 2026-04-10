@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+loguru
+undetected-playwright
+pandas
+openpyxl
+websockets
+PyJWT
+passlib
+supabase
+email-validator
