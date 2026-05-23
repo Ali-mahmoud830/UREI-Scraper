@@ -63,11 +63,13 @@ export default function Dashboard() {
   const [isScraping, setIsScraping] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchCity, setSearchCity] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
   const [propertyType, setPropertyType] = useState("both");
   const [timeFilter, setTimeFilter] = useState("all");
   const [targetAudience, setTargetAudience] = useState("sellers");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [isAiMode, setIsAiMode] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
   const [searchHistory, setSearchHistory] = useState<any[]>([]);
@@ -338,7 +340,6 @@ export default function Dashboard() {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { "Authorization": `Bearer ${token}` } : {})
-          },
           body: JSON.stringify({
             city: searchCity,
             property_type: propertyType,
@@ -346,7 +347,8 @@ export default function Dashboard() {
             sites: selectedSites,
             target_audience: targetAudience,
             min_price: minPrice || null,
-            max_price: maxPrice || null
+            max_price: maxPrice || null,
+            ai_prompt: isAiMode ? aiPrompt : ""
           })
         });
         const data = await res.json();
@@ -516,20 +518,41 @@ export default function Dashboard() {
         </div>
 
         {/* Adaptive Search Bar & Filters */}
-        <div className="w-full flex flex-col gap-3 relative z-10">
-          {/* Top Row: Search & Sites */}
-          <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <div className="relative flex-[2]">
-              <input
-                type="text"
-                placeholder="Search City (e.g. التجمع الخامس)..."
-                value={searchCity}
-                onChange={(e) => setSearchCity(e.target.value)}
-                disabled={isScraping}
-                className="w-full bg-surface/80 border border-emerald-500/30 rounded py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-emerald-400 disabled:opacity-50"
-              />
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Search Method</label>
+              <button 
+                onClick={() => setIsAiMode(!isAiMode)}
+                className={`text-xs px-3 py-1 rounded-full font-medium transition-all duration-300 ${isAiMode ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'bg-surface border border-gray-700 text-gray-400 hover:text-white'}`}
+              >
+                {isAiMode ? "✨ AI Prompt Mode Active" : "Manual Filters"}
+              </button>
             </div>
+            
+            {isAiMode ? (
+              <div className="relative w-full">
+                <textarea
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  disabled={isScraping}
+                  placeholder="e.g. Search for all listings tagged with 'Building for rent' or 'Commercial property' in Downtown, Dokki, Giza, or Zamalek with total area > 3000 sqm or floors > 5."
+                  className="w-full bg-[#0a0b0c] border border-purple-500/50 rounded-lg py-3 px-4 text-sm text-purple-100 placeholder-purple-400/30 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400/50 disabled:opacity-50 min-h-[80px] shadow-[inset_0_0_20px_rgba(168,85,247,0.05)] resize-y"
+                />
+              </div>
+            ) : (
+            <>
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="relative flex-[2]">
+                  <input
+                    type="text"
+                    placeholder="Search City (e.g. التجمع الخامس)..."
+                    value={searchCity}
+                    onChange={(e) => setSearchCity(e.target.value)}
+                    disabled={isScraping}
+                    className="w-full bg-surface/80 border border-emerald-500/30 rounded py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-emerald-400 disabled:opacity-50"
+                  />
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                </div>
 
             {/* Site Selector Dropdown */}
             <div className="relative flex-1 sm:max-w-[200px]" ref={siteMenuRef}>
@@ -617,7 +640,9 @@ export default function Dashboard() {
                 className="w-1/2 bg-surface/80 border border-emerald-500/30 rounded py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-400 disabled:opacity-50 placeholder-gray-500"
               />
             </div>
-          </div>
+            {/* End Bottom Row */}
+            </>
+            )}
         </div>
 
         {/* Control Panel */}

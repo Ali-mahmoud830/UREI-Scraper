@@ -45,6 +45,47 @@ class SearchRequest(BaseModel):
     target_audience: str = "sellers"
     min_price: str | None = None
     max_price: str | None = None
+    ai_prompt: str = ""
+    
+class SemanticQueryParser:
+    KNOWN_CITIES = [
+        "cairo", "giza", "alexandria", "downtown", "dokki", "zamalek", 
+        "nasr city", "heliopolis", "maadi", "new cairo", "5th settlement", 
+        "6th of october", "sheikh zayed", "shorouk", "obour", "badr"
+    ]
+    
+    @staticmethod
+    def parse(prompt: str):
+        prompt = prompt.lower()
+        constraints = {}
+        
+        area_match = re.search(r'area\s*(?:>|greater than|more than)\s*(\d+)', prompt) or \
+                     re.search(r'>\s*(\d+)\s*(?:sqm|m2|square meters)', prompt) or \
+                     re.search(r'(\d+)\+?\s*(?:sqm|m2)', prompt)
+        if area_match: constraints["min_area"] = int(area_match.group(1))
+            
+        floor_match = re.search(r'floors?\s*(?:>|greater than|more than)\s*(\d+)', prompt) or \
+                      re.search(r'>\s*(\d+)\s*floors?', prompt) or \
+                      re.search(r'(\d+)\+?\s*floors?', prompt)
+        if floor_match: constraints["min_floors"] = int(floor_match.group(1))
+            
+        intent = "both"
+        if "rent" in prompt or "lease" in prompt: intent = "rent"
+        elif "sale" in prompt or "buy" in prompt or "purchase" in prompt: intent = "sale"
+            
+        property_type = "both"
+        if "commercial" in prompt or "building" in prompt or "office" in prompt: property_type = "commercial"
+        
+        found_cities = []
+        for city in SemanticQueryParser.KNOWN_CITIES:
+            if city in prompt: found_cities.append(city)
+                
+        return {
+            "cities": found_cities,
+            "intent": intent,
+            "property_type": property_type,
+            "constraints": constraints
+        }
 
 class CreateAlertRequest(BaseModel):
     user_email: str
@@ -183,22 +224,41 @@ async def start_scraper(req: SearchRequest, request: Request, background_tasks: 
         detail = getattr(e, "detail", str(e))
         raise HTTPException(status_code=status_code, detail=detail)
 
+    # 1. Handle NLP AI Prompt if provided
+    ai_constraints = {}
+    if req.ai_prompt and len(req.ai_prompt) > 5:
+        parsed = SemanticQueryParser.parse(req.ai_prompt)
+        ai_constraints = parsed["constraints"]
+        # Override req fields
+        if parsed["cities"]: req.city = parsed["cities"][0]  # Take first primarily, multi-city loop can be added later
+        req.target_audience = "buyers" if parsed["intent"] == "rent" else "sellers" # Approximate logic
+        if parsed["property_type"] != "both": req.property_type = parsed["property_type"]
+        
     session_id = db.create_session(
         city=req.city, property_type=req.property_type,
         time_filter=req.time_filter, target_audience=req.target_audience
     )
-    actual_urls = build_search_urls(
-        city=req.city, property_type=req.property_type, 
-        sites=req.sites, target_audience=req.target_audience
-    )
+    
+    # 2. Build multi-city URLs if multiple cities found in AI Prompt
+    actual_urls = []
+    if req.ai_prompt and 'parsed' in locals() and parsed.get("cities"):
+        for city in parsed["cities"]:
+            actual_urls.extend(build_search_urls(city, req.property_type, req.sites, req.target_audience))
+    else:
+        actual_urls = build_search_urls(req.city, req.property_type, req.sites, req.target_audience)
+        
+    # Pass ai_constraints explicitly as min_area and min_floors
+    min_area = ai_constraints.get("min_area", None)
+    min_floors = ai_constraints.get("min_floors", None)
+
     background_tasks.add_task(
         orchestrator.start_scraper,
         req.city, req.property_type, req.time_filter, actual_urls,
         session_id, req.target_audience, limits.get("limit"), limits.get("ip_address"),
-        req.min_price, req.max_price
+        req.min_price, req.max_price, min_area, min_floors
     )
     
-    return {"status": "success", "message": f"Scraper started.", "session_id": session_id}
+    return {"status": "success", "message": f"Scraper started tracking {req.city or 'default'}", "session_id": session_id}
 
 @app.post("/api/scraper/stop")
 async def stop_scraper():

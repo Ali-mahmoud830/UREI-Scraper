@@ -120,11 +120,30 @@ class SemanticParser:
         # Phone Discovery: Extract Egyptian mobile numbers dynamically mapped
         self.phone_regex = re.compile(r'((?:(?:\+|00)20\s*|0)?1[0125](?:[\s\-]*\d){8})')
 
-    async def parse_listing(self, page, url, config, session_id, search_limit, current_count, target_audience="sellers", min_price=None, max_price=None):
-        if not config:
-            config = SITE_CONFIGS["dubizzle"]
-            
+    async def parse_listing(self, page, url, config, session_id=None, target_audience="sellers", current_count=0, search_limit=None, min_price=None, max_price=None, min_area=None, min_floors=None):
         try:
+            # --- AI Semantic Search Filtering (Area / Floors) ---
+            if min_area is not None or min_floors is not None:
+                body_text_lower = (await page.evaluate("document.body.innerText") or "").lower()
+                
+                if min_area is not None:
+                    # Look for sqm, m2, area near numbers
+                    area_matches = re.findall(r'(\d+[\d,]*)\s*(?:sqm|m2|square meters|متر|م٢)', body_text_lower)
+                    if area_matches:
+                        areas = [int(re.sub(r'[^\d]', '', m)) for m in area_matches if re.sub(r'[^\d]', '', m)]
+                        if not areas or max(areas) < min_area:
+                            logger.info(f"Skipping {url}: Area {max(areas) if areas else 'none'} < {min_area}")
+                            return 0
+                
+                if min_floors is not None:
+                    floor_matches = re.findall(r'(?:floor|طابق|دور)\s*(\d+)', body_text_lower) or re.findall(r'(\d+)\s*(?:floors?|طوابق)', body_text_lower)
+                    if floor_matches:
+                        floors = [int(m) for m in floor_matches]
+                        if not floors or max(floors) < min_floors:
+                            logger.info(f"Skipping {url}: Floors {max(floors) if floors else 'none'} < {min_floors}")
+                            return 0
+            # ---------------------------------------------------
+
             try:
                 await page.wait_for_selector(f'body', timeout=15000)
                 await asyncio.sleep(2)
@@ -330,7 +349,7 @@ class ScraperOrchestrator:
             logger.warning(f"[DDG Lite] Failed to scrape: {e}")
             return 0
 
-    async def start_scraper(self, city, property_type, time_filter, sites, session_id, target_audience="sellers", search_limit=None, ip_address=None, min_price=None, max_price=None):
+    async def start_scraper(self, city, property_type, time_filter, sites, session_id, target_audience="sellers", search_limit=None, ip_address=None, min_price=None, max_price=None, min_area=None, min_floors=None):
         self.is_running = True
         leads_found_count = 0
         try:
@@ -410,8 +429,9 @@ class ScraperOrchestrator:
                             added_count = await self.parser.parse_listing(
                                 new_page, href, config, 
                                 session_id=session_id, target_audience=target_audience,
-                                search_limit=search_limit, current_count=leads_found_count,
-                                min_price=min_price, max_price=max_price
+                                current_count=leads_found_count, search_limit=search_limit,
+                                min_price=min_price, max_price=max_price,
+                                min_area=min_area, min_floors=min_floors
                             )
                             if added_count:
                                 leads_found_count += added_count
