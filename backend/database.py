@@ -82,6 +82,27 @@ class DBManager:
     def add_lead(self, phone: str, price: str, location: str, url: str,
                  session_id: int = None, intent: str = "seller", description: str = "") -> bool:
         try:
+            # ─────────────────────────────────────────────────────────────────
+            # Deduplication Layer: Same price + location substring within 24h
+            # ─────────────────────────────────────────────────────────────────
+            if price and location and price not in ["Buyer Target", "Contact for Price", "N/A", "Unknown"]:
+                twenty_four_hours_ago = (datetime.utcnow() - timedelta(hours=24)).isoformat()
+                recent_dups = self.sb.table("leads").select("id, location, phone").eq("price", price).gte("timestamp", twenty_four_hours_ago).execute()
+                for dup in (recent_dups.data or []):
+                    # Exclude the exact same phone number (that's an update, handled by upsert)
+                    if dup.get("phone") == phone:
+                        continue
+                    dup_loc = dup.get("location", "")
+                    if dup_loc and (location.lower() in dup_loc.lower() or dup_loc.lower() in location.lower()):
+                        logger.info(f"Silently dropped duplicate lead from broker: {price} at {location} (Matches Lead #{dup['id']})")
+                        if session_id:
+                            try:
+                                # Link this duplicate to the current session so stats are accurate
+                                self.sb.table("session_leads").insert({"session_id": session_id, "lead_id": dup["id"]}).execute()
+                            except Exception:
+                                pass
+                        return False
+            # ─────────────────────────────────────────────────────────────────
             # Upsert by phone (unique)
             payload = {"phone": phone, "price": price, "location": location, "url": url, "intent": intent}
             if session_id:
