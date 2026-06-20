@@ -169,7 +169,10 @@ export default function PropertyUploadForm({ onClose, onSuccess }: PropertyUploa
                                         <option value="Warehouse">{t('scraper.categories.warehouse')}</option>
                                         <option value="Hotel">{t('scraper.categories.hotel')}</option>
                                         <option value="Land">{t('scraper.categories.land')}</option>
-                                        <option value="Commercial">{t('scraper.categories.commercial')}</option>
+                                        <option value="Shop">{t('scraper.categories.shop')}</option>
+                                        <option value="Pharmacy">{t('scraper.categories.pharmacy')}</option>
+                                        <option value="Showroom">{t('scraper.categories.showroom')}</option>
+                                        <option value="Office">{t('scraper.categories.office')}</option>
                                     </select>
                                 </div>
                                 <div className="flex-1">

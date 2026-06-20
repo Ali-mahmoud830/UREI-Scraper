@@ -33,7 +33,10 @@ export const en = {
       categories: {
         apartment: "Apartment",
         villa: "Villa",
-        commercial: "Commercial",
+        shop: "Shop",
+        pharmacy: "Pharmacy",
+        showroom: "Showroom",
+        office: "Office & Clinic",
         warehouse: "Warehouse",
         hotel: "Hotel",
         land: "Land"

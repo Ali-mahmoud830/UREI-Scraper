@@ -202,7 +202,10 @@ export default function ScraperControls({
                         <option value="warehouse">{t('scraper.categories.warehouse')}</option>
                         <option value="hotel">{t('scraper.categories.hotel')}</option>
                         <option value="land">{t('scraper.categories.land')}</option>
-                        <option value="commercial">{t('scraper.categories.commercial')}</option>
+                        <option value="shop">{t('scraper.categories.shop')}</option>
+                        <option value="pharmacy">{t('scraper.categories.pharmacy')}</option>
+                        <option value="showroom">{t('scraper.categories.showroom')}</option>
+                        <option value="office">{t('scraper.categories.office')}</option>
                     </select>
 
                     <div className="flex flex-1 gap-2 min-w-[200px]">

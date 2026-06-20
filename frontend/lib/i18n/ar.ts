@@ -33,7 +33,10 @@ export const ar = {
       categories: {
         apartment: "شقة",
         villa: "فيلا",
-        commercial: "تجاري",
+        shop: "محل تجاري",
+        pharmacy: "صيدلية",
+        showroom: "معرض",
+        office: "مكتب أو عيادة",
         warehouse: "مخزن",
         hotel: "فندق",
         land: "أرض"

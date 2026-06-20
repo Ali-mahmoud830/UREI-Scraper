@@ -209,6 +209,12 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
         "land", "plot of land", "industrial land"
     ]
 
+    # ⚙️ STRICT COMMERCIAL CATEGORIES
+    STRICT_SHOP_KEYWORDS = ["محل للبيع", "محل للايجار", "محلات للبيع", "shop for sale", "retail shop", "محل", "محلات"]
+    STRICT_PHARMACY_KEYWORDS = ["صيدلية للبيع", "صيدليه للايجار", "صيدلية مرخصة", "pharmacy for sale", "صيدلية", "صيدليه"]
+    STRICT_SHOWROOM_KEYWORDS = ["معرض للبيع", "معرض للايجار", "معارض للبيع", "showroom for sale", "معرض", "معارض"]
+    STRICT_OFFICE_KEYWORDS = ["مكتب للبيع", "مقر اداري", "عيادة للبيع", "مكاتب للايجار", "office for sale", "مكتب", "مكاتب", "عيادة", "عيادات", "اداري"]
+
     # ⚙️ TRANSACTION MODIFIERS (To be compounded with categories)
     SALE_MODIFIERS = ["للبيع", "كاش", "بالتقسيط", "قسط", "بتسهيلات", "مقدم", "تنازل", "لقطة"]
     RENT_MODIFIERS = ["للإيجار", "ايجار", "ايجار جديد", "قانون قديم", "مفروش"]
@@ -241,8 +247,14 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
                     base_keywords = ["مطلوب شقة", "محتاج شقة", "عايز شقة"]
                 elif property_category == "villa":
                     base_keywords = ["مطلوب فيلا", "عايز فيلا", "مطلوب توين هاوس"]
-                elif property_category == "commercial":
-                    base_keywords = ["مطلوب محل", "مطلوب محلات", "مطلوب عيادة", "مطلوب مكتب"]
+                elif property_category == "shop":
+                    base_keywords = [f"مطلوب {k}" for k in ["محل", "محلات"]]
+                elif property_category == "pharmacy":
+                    base_keywords = [f"مطلوب {k}" for k in ["صيدلية", "صيدليه"]]
+                elif property_category == "showroom":
+                    base_keywords = [f"مطلوب {k}" for k in ["معرض", "معارض"]]
+                elif property_category == "office":
+                    base_keywords = ["مطلوب مكتب", "مطلوب عيادة", "مطلوب مقر اداري"]
             else:
                 base_keywords = ["عقار", "شقة", "فيلا", "لقطة", "فرصة", "بمقدم", "كاش"]
                 if property_category == "warehouse":
@@ -255,8 +267,14 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
                     base_keywords = ["شقة", "شقق", "دوبلكس", "بنتهاوس", "apartment", "duplex"]
                 elif property_category == "villa":
                     base_keywords = ["فيلا", "فيلات", "تاون هاوس", "توين هاوس", "villa", "townhouse"]
-                elif property_category == "commercial":
-                    base_keywords = ["محل", "محلات", "مكتب", "عيادة", "صيدلية", "تجاري", "اداري"]
+                elif property_category == "shop":
+                    base_keywords = STRICT_SHOP_KEYWORDS
+                elif property_category == "pharmacy":
+                    base_keywords = STRICT_PHARMACY_KEYWORDS
+                elif property_category == "showroom":
+                    base_keywords = STRICT_SHOWROOM_KEYWORDS
+                elif property_category == "office":
+                    base_keywords = STRICT_OFFICE_KEYWORDS
                 
             # Build Intent Modifiers
             intent_modifiers = []

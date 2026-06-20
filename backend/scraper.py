@@ -30,6 +30,18 @@ LAND_KEYWORDS = [
     "land", "plot of land", "industrial land"
 ]
 
+# 🏪 SHOPS
+STRICT_SHOP_KEYWORDS = ["محل للبيع", "محل للايجار", "محلات للبيع", "shop for sale", "retail shop", "محل", "محلات"]
+
+# 💊 PHARMACIES
+STRICT_PHARMACY_KEYWORDS = ["صيدلية للبيع", "صيدليه للايجار", "صيدلية مرخصة", "pharmacy for sale", "صيدلية", "صيدليه"]
+
+# 🚗 SHOWROOMS
+STRICT_SHOWROOM_KEYWORDS = ["معرض للبيع", "معرض للايجار", "معارض للبيع", "showroom for sale", "معرض", "معارض"]
+
+# 🏢 OFFICES & CLINICS
+STRICT_OFFICE_KEYWORDS = ["مكتب للبيع", "مقر اداري", "عيادة للبيع", "مكاتب للايجار", "office for sale", "مكتب", "مكاتب", "عيادة", "عيادات", "اداري"]
+
 SITE_CONFIGS = {
     "dubizzle": {
         "link_pattern": 'a[href*="/ad/"]',
@@ -453,7 +465,10 @@ class SemanticParser:
                     elif cat == "land": keywords = LAND_KEYWORDS
                     elif cat == "apartment": keywords = ["شقة", "شقق", "دوبلكس", "بنتهاوس", "apartment", "duplex"]
                     elif cat == "villa": keywords = ["فيلا", "فيلات", "تاون هاوس", "توين هاوس", "villa", "townhouse"]
-                    elif cat == "commercial": keywords = ["محل", "مكتب", "عيادة", "صيدلية", "تجاري", "اداري"]
+                    elif cat == "shop": keywords = STRICT_SHOP_KEYWORDS
+                    elif cat == "pharmacy": keywords = STRICT_PHARMACY_KEYWORDS
+                    elif cat == "showroom": keywords = STRICT_SHOWROOM_KEYWORDS
+                    elif cat == "office": keywords = STRICT_OFFICE_KEYWORDS
                     
                     if keywords:
                         # Focus on the first 150 chars (title/header area) to avoid keyword stuffing at the bottom
