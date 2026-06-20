@@ -235,45 +235,46 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
             location_query = f'"{c}"' if c else '("التجمع الخامس" OR "الشيخ زايد" OR "العاصمة الادارية")'
             
             # Build Base Keywords depending on target audience & category
+            cat = property_category.lower() if property_category else "all"
             if target_audience == "buyers":
                 base_keywords = ["مطلوب", "عايز اشتري", "عايز اأجر", "رقم التواصل", "ابعتلي خاص"]
-                if property_category == "warehouse":
+                if cat == "warehouse":
                     base_keywords = [f"مطلوب {k}" for k in ["مخزن", "مستودع", "هنجر", "ثلاجة"]]
-                elif property_category == "hotel":
+                elif cat == "hotel":
                     base_keywords = [f"مطلوب {k}" for k in ["فندق", "قرية سياحية", "منتجع"]]
-                elif property_category == "land":
+                elif cat == "land":
                     base_keywords = [f"مطلوب {k}" for k in ["ارض", "فدان", "قيراط", "قطعة ارض"]]
-                elif property_category == "apartment":
+                elif cat == "apartment":
                     base_keywords = ["مطلوب شقة", "محتاج شقة", "عايز شقة"]
-                elif property_category == "villa":
+                elif cat == "villa":
                     base_keywords = ["مطلوب فيلا", "عايز فيلا", "مطلوب توين هاوس"]
-                elif property_category == "shop":
+                elif cat == "shop":
                     base_keywords = [f"مطلوب {k}" for k in ["محل", "محلات"]]
-                elif property_category == "pharmacy":
+                elif cat == "pharmacy":
                     base_keywords = [f"مطلوب {k}" for k in ["صيدلية", "صيدليه"]]
-                elif property_category == "showroom":
+                elif cat == "showroom":
                     base_keywords = [f"مطلوب {k}" for k in ["معرض", "معارض"]]
-                elif property_category == "office":
+                elif cat == "office":
                     base_keywords = ["مطلوب مكتب", "مطلوب عيادة", "مطلوب مقر اداري"]
             else:
                 base_keywords = ["عقار", "شقة", "فيلا", "لقطة", "فرصة", "بمقدم", "كاش"]
-                if property_category == "warehouse":
+                if cat == "warehouse":
                     base_keywords = WAREHOUSE_KEYWORDS
-                elif property_category == "hotel":
+                elif cat == "hotel":
                     base_keywords = HOTEL_KEYWORDS
-                elif property_category == "land":
+                elif cat == "land":
                     base_keywords = LAND_KEYWORDS
-                elif property_category == "apartment":
+                elif cat == "apartment":
                     base_keywords = ["شقة", "شقق", "دوبلكس", "بنتهاوس", "apartment", "duplex"]
-                elif property_category == "villa":
+                elif cat == "villa":
                     base_keywords = ["فيلا", "فيلات", "تاون هاوس", "توين هاوس", "villa", "townhouse"]
-                elif property_category == "shop":
+                elif cat == "shop":
                     base_keywords = STRICT_SHOP_KEYWORDS
-                elif property_category == "pharmacy":
+                elif cat == "pharmacy":
                     base_keywords = STRICT_PHARMACY_KEYWORDS
-                elif property_category == "showroom":
+                elif cat == "showroom":
                     base_keywords = STRICT_SHOWROOM_KEYWORDS
-                elif property_category == "office":
+                elif cat == "office":
                     base_keywords = STRICT_OFFICE_KEYWORDS
                 
             # Build Intent Modifiers
@@ -447,7 +448,8 @@ async def start_scraper(req: SearchRequest, request: Request, background_tasks: 
     if user_id:
         db.increment_user_searches(user_id)
 
-    constraints = {"min_area": None, "min_floors": None, "building_type": None, "cities": [], "property_category": req.property_category}
+    cat = req.property_category.lower() if req.property_category else "all"
+    constraints = {"min_area": None, "min_floors": None, "building_type": None, "cities": [], "property_category": cat}
     
     # 1. Strict Input Sanitization
     if req.min_price:

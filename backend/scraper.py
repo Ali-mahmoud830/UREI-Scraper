@@ -458,7 +458,7 @@ class SemanticParser:
                         
                 # Strict Category NLP Filtering (Title/Breadcrumb Focus)
                 if constraints and constraints.get("property_category") and constraints["property_category"] != "all":
-                    cat = constraints["property_category"]
+                    cat = constraints["property_category"].lower()
                     keywords = []
                     if cat == "warehouse": keywords = WAREHOUSE_KEYWORDS
                     elif cat == "hotel": keywords = HOTEL_KEYWORDS
@@ -470,13 +470,17 @@ class SemanticParser:
                     elif cat == "showroom": keywords = STRICT_SHOWROOM_KEYWORDS
                     elif cat == "office": keywords = STRICT_OFFICE_KEYWORDS
                     
-                    if keywords:
-                        # Focus on the first 150 chars (title/header area) to avoid keyword stuffing at the bottom
-                        title_area = (location + " " + desc[:150]).lower()
-                        valid_cat = any(k.lower() in title_area for k in keywords)
-                        if not valid_cat:
-                            logger.info(f"Dropped lead due to Category constraint ({cat}) spam check: {title_area[:60]}")
-                            continue
+                    if not keywords:
+                        # Fail-closed: if an unknown category was requested, drop to be safe
+                        logger.warning(f"Dropped lead due to unmapped category requested: {cat}")
+                        continue
+                        
+                    # Focus on the first 150 chars (title/header area) to avoid keyword stuffing at the bottom
+                    title_area = (location + " " + desc[:150]).lower()
+                    valid_cat = any(k.lower() in title_area for k in keywords)
+                    if not valid_cat:
+                        logger.info(f"Dropped lead due to Category constraint ({cat}) spam check: {title_area[:60]}")
+                        continue
 
                 if min_price is not None or max_price is not None:
                     try:
