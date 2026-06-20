@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Globe } from "lucide-react";
 
@@ -16,6 +16,11 @@ import { Globe } from "lucide-react";
  */
 export default function CommandCenterLayout({ children }: { children: React.ReactNode }) {
     const { t, i18n } = useTranslation();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const toggleLanguage = () => {
         const newLang = i18n.language.startsWith('en') ? 'ar' : 'en';
@@ -45,13 +50,15 @@ export default function CommandCenterLayout({ children }: { children: React.Reac
                             System Online
                         </span>
                         
-                        <button 
-                            onClick={toggleLanguage}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors border border-white/10"
-                        >
-                            <Globe size={16} />
-                            <span>{t('nav.lang')}</span>
-                        </button>
+                        {mounted && (
+                            <button 
+                                onClick={toggleLanguage}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors border border-white/10"
+                            >
+                                <Globe size={16} />
+                                <span>{t('nav.lang')}</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>

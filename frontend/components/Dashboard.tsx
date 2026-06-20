@@ -272,7 +272,7 @@ export default function Dashboard() {
 
     const checkCompletion = () => {
       const currentSession = searchHistory.find((s: any) => s.id === currentSessionId);
-      if (currentSession && currentSession.lead_count >= searchLimit) {
+      if (currentSession && (currentSession.lead_count >= searchLimit || currentSession.status === 'finished' || currentSession.status === 'completed')) {
         setIsScraping(false);
         if (activePolls === 0) {
           toast.success(t('dashboard.sessionComplete'));
