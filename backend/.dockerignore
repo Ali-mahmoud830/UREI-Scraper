@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+venv/
+.env
+.git/
+leads.db
+Search_Session_*.xlsx

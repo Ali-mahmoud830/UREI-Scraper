@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-gray-100 antialiased;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-surface/60 backdrop-blur-xl border border-indigo-500/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl transition-all duration-300 relative overflow-hidden;
+  }
+  
+  .glass-card-hover {
+    @apply hover:border-indigo-500/30 hover:shadow-[0_8px_32px_rgba(79,70,229,0.15)] hover:-translate-y-1;
+  }
+  
+  .glass-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none;
+  }
+}

@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+loguru
+undetected-playwright
+pandas
+openpyxl
+websockets
+PyJWT
+passlib
+supabase
+email-validator
+pydantic
+pydantic[email]
+aiohttp
+slowapi
+python-dotenv
