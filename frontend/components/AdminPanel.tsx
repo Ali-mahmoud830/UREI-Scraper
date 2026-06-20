@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { Lock, Users, Settings, Key, Send, RefreshCw, Activity, Terminal, Zap, Shield, BarChart2, Clock } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -91,6 +92,7 @@ function UsageBar({ searches, tier }: { searches: number; tier: string }) {
 // Main Component
 // ─────────────────────────────────────────────────────────────────────
 export default function AdminPanel() {
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
@@ -124,7 +126,7 @@ export default function AdminPanel() {
         addLog("Admin authenticated successfully.");
         fetchUsers(pwd);
       } else {
-        toast.error("Invalid Admin Password");
+        toast.error(t('admin.toast.error'));
         addLog("Admin login FAILED — invalid credentials.");
       }
     } catch {

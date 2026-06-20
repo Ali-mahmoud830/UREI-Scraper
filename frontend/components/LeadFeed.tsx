@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building,Activity, ExternalLink, Zap } from "lucide-react";
 
@@ -16,11 +17,13 @@ interface LeadFeedProps {
 export default function LeadFeed({
     leads, visibleCount, authStatus, setVisibleCount, getSourceBadge, getPriceHealth, handleAiValuation, isScraping
 }: LeadFeedProps) {
+    const { t } = useTranslation();
+
     return (
         <div className="glass-card p-6 flex flex-col h-[400px] overflow-hidden">
             <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
                 <Activity size={18} className="text-emerald-400 animate-pulse" />
-                Supabase Realtime Stream
+                {t('feed.title')}
             </h2>
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 relative">
                 <AnimatePresence>
@@ -80,8 +83,8 @@ export default function LeadFeed({
                                             {lead.floor_breakdown.map((floor: any, idx: number) => (
                                                 <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between bg-black/20 border border-purple-500/10 px-3 py-1.5 rounded-md text-xs">
                                                     <span className="text-purple-100 font-bold w-full sm:w-1/4 truncate mb-1 sm:mb-0">{floor.level}</span>
-                                                    <span className="text-emerald-400/90 font-mono w-full sm:w-1/4 sm:text-center">{floor.area_sqm ? `${floor.area_sqm} sqm` : '-'}</span>
-                                                    <span className="text-gray-300 w-full sm:w-1/4 sm:text-center truncate">{floor.rooms ? `${floor.rooms} Rooms` : '-'}</span>
+                                                    <span className="text-emerald-400/90 font-mono w-full sm:w-1/4 sm:text-center">{floor.area_sqm ? `${floor.area_sqm} ${t('feed.area')}` : '-'}</span>
+                                                    <span className="text-gray-300 w-full sm:w-1/4 sm:text-center truncate">{floor.rooms ? `${floor.rooms} ${t('feed.rooms')}` : '-'}</span>
                                                     <span className="text-purple-300/80 w-full sm:w-1/4 sm:text-right truncate" title={Array.isArray(floor.features) ? floor.features.join(', ') : floor.features}>
                                                         {Array.isArray(floor.features) ? floor.features.join(', ') : (floor.features || '-')}
                                                     </span>
@@ -121,13 +124,12 @@ export default function LeadFeed({
                         {isScraping ? (
                             <>
                                 <div className="w-8 h-8 flex border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                                Waiting for Supabase insertions...
+                                {t('feed.waiting')}
                             </>
                         ) : (
                             <div className="text-center">
                                 <Activity size={32} className="mx-auto text-gray-600 mb-2" />
-                                <p className="text-gray-400 font-medium text-base">No Matching Commercial Assets Found</p>
-                                <p className="text-gray-500 text-xs mt-1">Try broadening your search criteria or categories.</p>
+                                <p className="text-gray-400 font-medium text-base">{t('feed.empty')}</p>
                             </div>
                         )}
                     </div>

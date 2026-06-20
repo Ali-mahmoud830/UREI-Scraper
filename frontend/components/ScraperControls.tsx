@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, ChevronDown, Check, Play, Square, Bell, Download, X } from "lucide-react";
 
@@ -46,13 +47,14 @@ export default function ScraperControls({
     const { total_searches = 0, search_limit = null } = authStatus.user || {};
     const isLimitReached = search_limit !== null && total_searches >= search_limit;
     const isStartDisabled = isToggleLoading || (!isScraping && isLimitReached);
+    const { t } = useTranslation();
 
     return (
         <header className="flex flex-col items-start gap-4 pb-4 border-b border-emerald-500/20">
             <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                        {authStatus.user && authStatus.user.tier ? `PropPulse Elite (${authStatus.user.tier.charAt(0).toUpperCase() + authStatus.user.tier.slice(1).toLowerCase()})` : "PropPulse Elite (Trial)"}
+                        {authStatus.user && authStatus.user.tier ? `${t('scraper.title')} (${authStatus.user.tier.charAt(0).toUpperCase() + authStatus.user.tier.slice(1).toLowerCase()})` : `${t('scraper.title')} (Trial)`}
                     </h1>
                     {authStatus.user && authStatus.user.expires_at ? (
                         <CountdownTimer expiresAt={authStatus.user.expires_at} />
@@ -62,7 +64,7 @@ export default function ScraperControls({
                 </div>
                 
                 <div className="flex items-center gap-3 bg-surface/50 p-2 rounded-lg border border-purple-500/20">
-                    <span className="text-sm font-semibold text-purple-300">AI Semantic Engine</span>
+                    <span className="text-sm font-semibold text-purple-300">{t('scraper.aiPrompt')}</span>
                     <button
                         onClick={() => setIsAiMode(!isAiMode)}
                         disabled={isScraping}
@@ -87,7 +89,7 @@ export default function ScraperControls({
                                 value={aiPrompt}
                                 onChange={(e) => setAiPrompt(e.target.value)}
                                 disabled={isScraping}
-                                placeholder='e.g., "Search for all listings tagged with Building for rent or Commercial property in Downtown, Dokki, Giza, or Zamalek with total area > 3000 sqm or floors > 5."'
+                                placeholder={t('scraper.aiPromptPlaceholder')}
                                 className="relative w-full h-24 bg-[#0A0F1C] text-purple-100 placeholder-purple-300/40 border border-purple-500/50 rounded-lg p-4 text-sm focus:outline-none focus:border-purple-400 resize-none z-10"
                             />
                         </div>
@@ -105,7 +107,7 @@ export default function ScraperControls({
                         ))}
                         <input
                             type="text"
-                            placeholder={searchCity.length === 0 ? "Type city & press Enter..." : "Add city..."}
+                            placeholder={searchCity.length === 0 ? t('scraper.cityPlaceholder') : t('scraper.city')}
                             disabled={isScraping}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -125,7 +127,7 @@ export default function ScraperControls({
                             className="w-full flex items-center justify-between gap-2 bg-surface/80 border border-emerald-500/30 rounded py-2 px-3 text-sm text-gray-300 focus:outline-none hover:border-emerald-400 disabled:opacity-50"
                         >
                             <span className="truncate max-w-[120px]">
-                                {selectedSites.includes("all") ? "All Sites" : `${selectedSites.length} Selected`}
+                                {selectedSites.includes("all") ? t('common.all') : `${selectedSites.length} ${t('common.all')}`}
                             </span>
                             <ChevronDown size={14} className={`transition-transform ${isSiteMenuOpen ? "rotate-180" : ""}`} />
                         </button>
@@ -138,7 +140,7 @@ export default function ScraperControls({
                                     className="absolute top-full right-0 mt-2 w-56 bg-[#0f1011] border border-emerald-500/30 rounded flex flex-col shadow-xl z-50 overflow-hidden"
                                 >
                                     <div className="p-2 border-b border-emerald-500/20 bg-emerald-500/5">
-                                        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-1">Target Sites</span>
+                                        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-1">{t('scraper.sources')}</span>
                                     </div>
                                     <div className="max-h-60 overflow-y-auto p-1">
                                         {AVAILABLE_SITES.map((site) => {
@@ -168,8 +170,8 @@ export default function ScraperControls({
                         disabled={isScraping}
                         className="flex-1 bg-surface/80 border border-purple-500/30 rounded py-2 px-3 text-sm text-purple-300 focus:outline-none focus:border-purple-400 disabled:opacity-50 font-medium"
                     >
-                        <option value="sellers">Target: Sellers</option>
-                        <option value="buyers">Target: Buyers</option>
+                        <option value="sellers">{t('scraper.targets.sellers')}</option>
+                        <option value="buyers">{t('scraper.targets.buyers')}</option>
                     </select>
                     <select
                         value={propertyType}
@@ -177,9 +179,9 @@ export default function ScraperControls({
                         disabled={isScraping}
                         className="flex-1 bg-surface/80 border border-emerald-500/30 rounded py-2 px-3 text-sm text-gray-300 focus:outline-none focus:border-emerald-400 disabled:opacity-50"
                     >
-                        <option value="both">Sale & Rent {propertyType === 'both' && '✓'}</option>
-                        <option value="sale">For Sale {propertyType === 'sale' && '✓'}</option>
-                        <option value="rent">For Rent {propertyType === 'rent' && '✓'}</option>
+                        <option value="both">{t('scraper.intents.both')} {propertyType === 'both' && '✓'}</option>
+                        <option value="sale">{t('scraper.intents.sale')} {propertyType === 'sale' && '✓'}</option>
+                        <option value="rent">{t('scraper.intents.rent')} {propertyType === 'rent' && '✓'}</option>
                     </select>
                     
                     <select
@@ -188,19 +190,19 @@ export default function ScraperControls({
                         disabled={isScraping}
                         className="flex-1 bg-surface/80 border border-emerald-500/30 rounded py-2 px-3 text-sm text-cyan-300 focus:outline-none focus:border-cyan-400 disabled:opacity-50"
                     >
-                        <option value="all">All Types</option>
-                        <option value="apartment">Apartments</option>
-                        <option value="villa">Villas</option>
-                        <option value="warehouse">Warehouses</option>
-                        <option value="hotel">Hotels</option>
-                        <option value="land">Lands</option>
-                        <option value="commercial">Commercial</option>
+                        <option value="all">{t('scraper.allCategories')}</option>
+                        <option value="apartment">{t('scraper.categories.apartment')}</option>
+                        <option value="villa">{t('scraper.categories.villa')}</option>
+                        <option value="warehouse">{t('scraper.categories.warehouse')}</option>
+                        <option value="hotel">{t('scraper.categories.hotel')}</option>
+                        <option value="land">{t('scraper.categories.land')}</option>
+                        <option value="commercial">{t('scraper.categories.commercial')}</option>
                     </select>
 
                     <div className="flex flex-1 gap-2 min-w-[200px]">
                         <input
                             type="number"
-                            placeholder="Min Price (EGP)"
+                            placeholder={t('scraper.priceMin')}
                             value={minPrice}
                             onChange={(e) => setMinPrice(e.target.value)}
                             disabled={isScraping}
@@ -208,7 +210,7 @@ export default function ScraperControls({
                         />
                         <input
                             type="number"
-                            placeholder="Max Price (EGP)"
+                            placeholder={t('scraper.priceMax')}
                             value={maxPrice}
                             onChange={(e) => setMaxPrice(e.target.value)}
                             disabled={isScraping}
@@ -245,12 +247,12 @@ export default function ScraperControls({
                         <Play size={18} />
                     )}
                     {isToggleLoading
-                        ? "Processing..."
+                        ? t('common.loading')
                         : isScraping
-                            ? "Stop Scraper"
+                            ? t('scraper.stop')
                             : isLimitReached
                                 ? `Limit Reached (${total_searches}/${search_limit})`
-                                : "Start Scraping Engine"}
+                                : t('scraper.start')}
                 </button>
 
                 <button

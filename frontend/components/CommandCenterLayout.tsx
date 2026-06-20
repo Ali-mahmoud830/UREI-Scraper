@@ -1,4 +1,8 @@
+"use client";
+
 import React from "react";
+import { useTranslation } from "react-i18next";
+import { Globe } from "lucide-react";
 
 /**
  * PropPulse Elite: Global Command Center Glassmorphic Layout.
@@ -11,6 +15,13 @@ import React from "react";
  * @param {React.ReactNode} props.children - Dashboard sections and content cards.
  */
 export default function CommandCenterLayout({ children }: { children: React.ReactNode }) {
+    const { t, i18n } = useTranslation();
+
+    const toggleLanguage = () => {
+        const newLang = i18n.language.startsWith('en') ? 'ar' : 'en';
+        i18n.changeLanguage(newLang);
+    };
+
     return (
         <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
             {/* Dynamic Background Glows */}
@@ -28,11 +39,19 @@ export default function CommandCenterLayout({ children }: { children: React.Reac
                             PropPulse <span className="text-indigo-400">Elite</span>
                         </h1>
                     </div>
-                    <div className="flex items-center gap-4 text-sm font-medium text-gray-400">
+                    <div className="flex items-center gap-6 text-sm font-medium text-gray-400">
                         <span className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
                             System Online
                         </span>
+                        
+                        <button 
+                            onClick={toggleLanguage}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/5 transition-colors border border-white/10"
+                        >
+                            <Globe size={16} />
+                            <span>{t('nav.lang')}</span>
+                        </button>
                     </div>
                 </div>
             </header>
