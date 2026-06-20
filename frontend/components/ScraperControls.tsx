@@ -115,6 +115,12 @@ export default function ScraperControls({
                                     e.currentTarget.value = '';
                                 }
                             }}
+                            onBlur={(e) => {
+                                if (e.currentTarget.value.trim()) {
+                                    setSearchCity([...searchCity, e.currentTarget.value.trim()]);
+                                    e.currentTarget.value = '';
+                                }
+                            }}
                             className="flex-1 bg-transparent border-none text-sm text-white focus:outline-none disabled:opacity-50 min-w-[120px] pb-0.5"
                         />
                     </div>
