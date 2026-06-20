@@ -664,35 +664,51 @@ export default function Dashboard() {
         />
 
         {/* Premium Metric Cards - Global */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
             <AnimatedStatCard
                 title={t('dashboard.totalLeads')}
-                value={globalStats.total_leads.toLocaleString()}
-                icon={<Database size={24} className="text-indigo-400" />}
-                trend="+12% this week"
-                color="indigo"
+                value={globalStats.total_leads.toLocaleString() || 0}
+                unit="UNITS"
+                icon={<Activity size={24} />}
+                subtitle="Live DB Sync"
+                themeColor="emerald"
+            />
+            <AnimatedStatCard
+                title="Extracted Mobiles"
+                value={globalStats.verified_phones.toLocaleString() || 0}
+                unit="CONTACTS"
+                icon={<Phone size={24} />}
+                subtitle="Validated"
+                themeColor="cyan"
+                delay={0.1}
             />
             <AnimatedStatCard
                 title={t('dashboard.avgPrice')}
-                value={`EGP ${(globalStats.avg_price / 1000000).toFixed(1)}M`}
-                icon={<TrendingUp size={24} className="text-emerald-400" />}
-                trend="Market stable"
-                color="emerald"
+                value={(globalStats.avg_price / 1000000).toFixed(1) + "M"}
+                unit="EGP"
+                icon={<DollarSign size={24} />}
+                subtitle="Market Avg"
+                themeColor="purple"
+                delay={0.2}
             />
-            <AnimatedStatCard
-                title={t('dashboard.successRate')}
-                value="94.2%"
-                icon={<ShieldCheck size={24} className="text-cyan-400" />}
-                trend="High accuracy"
-                color="cyan"
-            />
-            <AnimatedStatCard
-                title={t('dashboard.activeSessions')}
-                value={activePolls > 0 ? activePolls.toString() : searchHistory.filter(s => s.status === 'running').length.toString()}
-                icon={<RadioReceiver size={24} className={activePolls > 0 ? "text-rose-400 animate-pulse" : "text-gray-400"} />}
-                trend={activePolls > 0 ? "Scraping now" : "Offline"}
-                color={activePolls > 0 ? "rose" : "gray"}
-            />
+            {authStatus.user && (() => {
+                const used = authStatus.user.total_searches ?? 0;
+                // Fallback to 50 if the API returned null for an older token
+                const limit = authStatus.user.search_limit ?? 50;
+                const remaining = Math.max(0, limit - used);
+                const atLimit = used >= limit;
+                return (
+                    <AnimatedStatCard
+                        title="Searches Used"
+                        value={`${used}/${limit}`}
+                        unit={atLimit ? "⚠ LIMIT HIT" : "USED"}
+                        icon={<Search size={24} />}
+                        subtitle={`${remaining} remaining`}
+                        themeColor={atLimit ? "purple" : "emerald"}
+                        delay={0.3}
+                    />
+                );
+            })()}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
