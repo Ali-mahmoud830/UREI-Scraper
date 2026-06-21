@@ -146,7 +146,16 @@ class GhostNavigator:
             user_agent=random.choice(user_agents),
             viewport={'width': random.randint(1366, 1920), 'height': random.randint(768, 1080)},
             java_script_enabled=True,
-            bypass_csp=True
+            bypass_csp=True,
+            extra_http_headers={
+                "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
         )
         
         await self.context.add_cookies([{
@@ -458,7 +467,7 @@ class SemanticParser:
                     if slug and len(slug) > 3: fallback_loc = slug.title()[:60]
 
             # Phones from full-page that were NOT captured by cards
-            card_phones = {p for p, _, _, _, _ in extracted_card_leads}
+            card_phones = {p for p, _, _, _, _, _ in extracted_card_leads}
             new_full_phones = full_page_phones - card_phones
             logger.info(f"Page scan: {len(extracted_card_leads)} card leads, {len(new_full_phones)} additional page-level phones")
 
