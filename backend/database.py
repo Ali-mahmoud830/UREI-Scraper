@@ -20,21 +20,47 @@ from supabase import create_client, Client
 # Supabase HTTP client (uses HTTPS port 443 — never blocked by AWS)
 # ─────────────────────────────────────────────────────────────────────
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("FATAL: SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables must be set.")
+    raise RuntimeError("FATAL: SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables must be set and not empty.")
 
 _client: Client | None = None
 
+
+# ─────────────────────────────────────────────────────────────────────
+# Monkeypatch httpx to Force HTTP/1.1 (Bypass HTTP/2 Multiplexing Drops)
+# ─────────────────────────────────────────────────────────────────────
+import httpx
+
+_original_client_init = httpx.Client.__init__
+def _patched_client_init(self, *args, **kwargs):
+    kwargs["http2"] = False
+    _original_client_init(self, *args, **kwargs)
+httpx.Client.__init__ = _patched_client_init
+
+_original_async_client_init = httpx.AsyncClient.__init__
+def _patched_async_client_init(self, *args, **kwargs):
+    kwargs["http2"] = False
+    _original_async_client_init(self, *args, **kwargs)
+httpx.AsyncClient.__init__ = _patched_async_client_init
 
 def get_db() -> Client:
     """Return a cached Supabase client instance."""
     global _client
     if _client is None:
+        from supabase import ClientOptions
+        # Try to pass ClientOptions just in case, but rely on monkeypatch for http2
         _client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        logger.info("Supabase HTTP client created.")
+        
+        # Immediate fallback connection ping to verify credentials and warmup the socket
+        try:
+            _client.table("admin_config").select("key").limit(1).execute()
+            logger.info("Supabase HTTP/1.1 client created and connection verified.")
+        except Exception as e:
+            logger.error(f"Supabase Connection Ping Failed! Network blocked or invalid credentials: {e}")
+            
     return _client
 
 
