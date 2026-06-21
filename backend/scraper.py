@@ -47,6 +47,7 @@ SITE_CONFIGS = {
         "link_pattern": 'a[href*="/ad/"]',
         # Card-level selectors for search results page (no individual page visit needed)
         "card": '[data-testid="listing-card"], article, li[class*="listing"], div[class*="listing-card"], ._1f086954',
+        "card_title": '[aria-label="Title"], h2, h3, ._1f086954',
         "card_price": '[aria-label="Price"], span[class*="price"], div[class*="price"]',
         "card_location": '[aria-label="Location"], span[class*="location"], div[class*="location"]',
         "card_phone": '[class*="phone"], [aria-label*="phone"], [data-testid*="phone"]',
@@ -54,6 +55,7 @@ SITE_CONFIGS = {
     "aqarmap": {
         "link_pattern": 'a[href*="/listing/"], a[href*="/property/"]',
         "card": '.search-listing-card, .listingCard, article',
+        "card_title": '.search-listing-card__title, h2, h3',
         "card_price": '.search-listing-card__price, .listingCardPrice, .price-text',
         "card_location": '.search-listing-card__address, .listingCardLocation, .address-text',
         "card_phone": '.phone, [class*="phone"]',
@@ -61,6 +63,7 @@ SITE_CONFIGS = {
     "propertyfinder": {
         "link_pattern": 'a[href*="/en/pl/"], a[href*="/property/"]',
         "card": '.property-card, article[class*="PropertyCard"]',
+        "card_title": '.property-card__title, h2, h3',
         "card_price": '.property-card__price, [data-testid="price"]',
         "card_location": '.property-card__location, [data-testid="location"]',
         "card_phone": '[data-testid*="phone"], [class*="phone"]',
@@ -68,6 +71,7 @@ SITE_CONFIGS = {
     "bayut": {
         "link_pattern": 'a[href*="/en/property/details-"]',
         "card": '.listing-card, article, [class*="PropertyCard"]',
+        "card_title": '[aria-label="Title"], h2, h3',
         "card_price": '[aria-label="Price"], span[class*="price"]',
         "card_location": '[aria-label="Location"], div[class*="location"]',
         "card_phone": '[aria-label*="phone"], [class*="phone"]',
@@ -75,6 +79,7 @@ SITE_CONFIGS = {
     "elbayt": {
         "link_pattern": 'a[href*="/en/property/"]',
         "card": 'article, .property-card',
+        "card_title": 'h2, h3, .title',
         "card_price": '.price, .property-price',
         "card_location": '.location, .property-location, address',
         "card_phone": '.phone',
@@ -82,6 +87,7 @@ SITE_CONFIGS = {
     "semsarmasr": {
         "link_pattern": 'a[href*="/en/properties/"], a[href*="/ar/properties/"]',
         "card": 'article, li[class*="item"], div[class*="item"]',
+        "card_title": 'h2, h3, .title, .item-title',
         "card_price": '.price, .item-price',
         "card_location": '.location, .item-location',
         "card_phone": '.phone',
@@ -89,6 +95,7 @@ SITE_CONFIGS = {
     "shofaqar": {
         "link_pattern": 'a[href*="/properties/"]',
         "card": 'article, .property-card',
+        "card_title": 'h2, h3, .title, .pro-title',
         "card_price": '.price, .pro-price',
         "card_location": '.location, .pro-loc',
         "card_phone": '.phone',
@@ -96,6 +103,7 @@ SITE_CONFIGS = {
     "realestate": {
         "link_pattern": 'a[href*="/properties/"]',
         "card": 'article, .unit-card',
+        "card_title": 'h2, h3, .title, .unit-title',
         "card_price": '.price, .unit-price',
         "card_location": '.location, .unit-location',
         "card_phone": '.phone',
@@ -373,6 +381,20 @@ class SemanticParser:
                         loc_match = re.search(r'(?:Cairo|Giza|Alexandria|Maadi|Zamalek|Heliopolis|Rehab|Tagamo|New Cairo|Sheikh Zayed)[^\n]*', card_text, re.IGNORECASE)
                         if loc_match: location = loc_match.group(0).strip()[:80]
 
+                    # Extract Card Title specifically
+                    card_title_text = ""
+                    try:
+                        title_el = await card.query_selector(config.get("card_title", "h2, h3, .title"))
+                        if title_el:
+                            title_raw = await title_el.inner_text()
+                            card_title_text = title_raw.strip().translate(arabic_to_english)
+                    except Exception: pass
+                    
+                    if not card_title_text:
+                        # Fallback to first line of text if title missing
+                        lines = [line.strip() for line in card_text.split('\n') if line.strip()]
+                        card_title_text = lines[0] if lines else ""
+
                     # Extracted constraints
                     area = None
                     area_match = re.search(r'([\d,]+)\s*(?:sqm|m2|meter|متر|م٢|م2)', card_text, re.IGNORECASE)
@@ -405,7 +427,7 @@ class SemanticParser:
                     # Associate this card with its href (by index)
                     card_url = hrefs[i] if i < len(hrefs) else start_url
                     for phone in phones:
-                        extracted_card_leads.append((phone, price, location, card_url, card_text[:800]))
+                        extracted_card_leads.append((phone, price, location, card_url, card_text[:800], card_title_text))
 
                 except Exception as card_err:
                     logger.debug(f"Card {i} parse error: {card_err}")
@@ -441,7 +463,7 @@ class SemanticParser:
             logger.info(f"Page scan: {len(extracted_card_leads)} card leads, {len(new_full_phones)} additional page-level phones")
 
             # Commit card leads first
-            for (phone, price, location, href, desc) in extracted_card_leads:
+            for (phone, price, location, href, desc, card_title_text) in extracted_card_leads:
                 if check_running and not check_running(): break
                 if search_limit is not None and search_limit != -1 and (current_count + leads_added) >= search_limit: break
                 
@@ -475,21 +497,27 @@ class SemanticParser:
                         logger.warning(f"Dropped lead due to unmapped category requested: {cat}")
                         continue
                         
-                    # Focus on the first 150 chars (title/header area) to avoid keyword stuffing at the bottom
-                    title_area = (location + " " + desc[:150]).lower()
+                    # Focus STRICTLY on the extracted card title header. Bypass description spam.
+                    title_area = card_title_text.lower() if card_title_text else (location + " " + desc[:150]).lower()
                     valid_cat = any(k.lower() in title_area for k in keywords)
                     if not valid_cat:
                         logger.info(f"Dropped lead due to Category constraint ({cat}) spam check: {title_area[:60]}")
                         continue
 
+                # Hard Price Stop Boundary
                 if min_price is not None or max_price is not None:
                     try:
                         clean_num = re.sub(r'[^\d]', '', str(price))
                         if clean_num:
                             num_price = int(clean_num)
-                            if min_price is not None and num_price < int(float(min_price)): continue
-                            if max_price is not None and num_price > int(float(max_price)): continue
+                            if min_price is not None and num_price < int(float(min_price)): 
+                                logger.info(f"Dropped lead due to min_price boundary. {num_price} < {min_price}")
+                                continue
+                            if max_price is not None and num_price > int(float(max_price)): 
+                                logger.info(f"Dropped lead due to max_price boundary. {num_price} > {max_price}")
+                                continue
                     except (ValueError, TypeError): pass
+                    
                 intent_val = "buyer" if target_audience == "buyers" else "seller"
                 added = self.db.add_lead(phone, price, location, href, session_id=session_id, intent=intent_val, description=desc)
                 if added:
@@ -513,24 +541,30 @@ class SemanticParser:
                         logger.info(f"Dropped full-page lead due to strict location NLP constraint: {fallback_loc}")
                         continue
                         
-                # Strict Category NLP Filtering
+                # Strict Category NLP Filtering for Full Page Phones
                 if constraints and constraints.get("property_category") and constraints["property_category"] != "all":
-                    cat = constraints["property_category"]
+                    cat = constraints["property_category"].lower()
                     keywords = []
                     if cat == "warehouse": keywords = WAREHOUSE_KEYWORDS
                     elif cat == "hotel": keywords = HOTEL_KEYWORDS
                     elif cat == "land": keywords = LAND_KEYWORDS
                     elif cat == "apartment": keywords = ["شقة", "شقق", "دوبلكس", "بنتهاوس", "apartment", "duplex"]
                     elif cat == "villa": keywords = ["فيلا", "فيلات", "تاون هاوس", "توين هاوس", "villa", "townhouse"]
-                    elif cat == "commercial": keywords = ["محل", "مكتب", "عيادة", "صيدلية", "تجاري", "اداري"]
+                    elif cat == "shop": keywords = STRICT_SHOP_KEYWORDS
+                    elif cat == "pharmacy": keywords = STRICT_PHARMACY_KEYWORDS
+                    elif cat == "showroom": keywords = STRICT_SHOWROOM_KEYWORDS
+                    elif cat == "office": keywords = STRICT_OFFICE_KEYWORDS
                     
-                    if keywords:
-                        # Focus on the first 150 chars for anti-spam
-                        title_area = (fallback_loc + " " + body_text[:150]).lower()
-                        valid_cat = any(k.lower() in title_area for k in keywords)
-                        if not valid_cat:
-                            logger.info(f"Dropped full-page lead due to Category constraint ({cat}) spam check")
-                            continue
+                    if not keywords:
+                        logger.warning(f"Dropped full-page lead due to unmapped category requested: {cat}")
+                        continue
+                        
+                    # Focus on the first 150 chars for anti-spam
+                    title_area = (fallback_loc + " " + body_text[:150]).lower()
+                    valid_cat = any(k.lower() in title_area for k in keywords)
+                    if not valid_cat:
+                        logger.info(f"Dropped full-page lead due to Category constraint ({cat}) spam check")
+                        continue
                 
                 # Strict Price Constraints for Fallback Phones
                 if min_price is not None or max_price is not None:
@@ -538,8 +572,12 @@ class SemanticParser:
                         clean_num = re.sub(r'[^\d]', '', str(fallback_price))
                         if clean_num:
                             num_price = int(clean_num)
-                            if min_price is not None and num_price < int(float(min_price)): continue
-                            if max_price is not None and num_price > int(float(max_price)): continue
+                            if min_price is not None and num_price < int(float(min_price)): 
+                                logger.info(f"Dropped full-page lead due to min_price boundary.")
+                                continue
+                            if max_price is not None and num_price > int(float(max_price)): 
+                                logger.info(f"Dropped full-page lead due to max_price boundary.")
+                                continue
                     except (ValueError, TypeError): pass
                         
                 intent_val = "buyer" if target_audience == "buyers" else "seller"

@@ -301,19 +301,25 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
         if not c and ("all" in sites or not sites):
             continue
 
+        cat_is_commercial = cat in ["warehouse", "shop", "pharmacy", "showroom", "office", "commercial"]
+        pf_cat = "3" if cat_is_commercial else "1"
+        dbz_cat = "commercial-for-sale" if cat_is_commercial else "properties-for-sale"
+        dbz_rent_cat = "commercial-for-rent" if cat_is_commercial else "properties-for-rent"
+        aqar_cat = "commercial" if cat_is_commercial else "property-type"
+
         if property_type in ["sale", "both"]:
-            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/properties-for-sale/q-{city_slug}/")
-            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-sale/property-type/{city_slug}/")
-            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c=1&t=1&q={city_slug}")
+            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/{dbz_cat}/q-{city_slug}/")
+            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-sale/{aqar_cat}/{city_slug}/")
+            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c={pf_cat}&t=1&q={city_slug}")
             if "bayut" in selected: urls.append(f"https://www.bayut.eg/en/{city_slug}/properties-for-sale/")
             if "semsarmasr" in selected: urls.append(f"https://www.semsarmasr.com/en/properties-for-sale/{city_slug}")
             if "shofaqar" in selected: urls.append(f"https://shofaqar.com/properties-for-sale/{city_slug}")
             if "realestate" in selected: urls.append(f"https://realestate.eg/en/for-sale/{city_slug}")
             
         if property_type in ["rent", "both"]:
-            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/properties-for-rent/q-{city_slug}/")
-            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-rent/property-type/{city_slug}/")
-            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c=2&t=1&q={city_slug}")
+            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/{dbz_rent_cat}/q-{city_slug}/")
+            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-rent/{aqar_cat}/{city_slug}/")
+            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c={pf_cat}&t=2&q={city_slug}")
             if "bayut" in selected: urls.append(f"https://www.bayut.eg/en/{city_slug}/properties-for-rent/")
             if "semsarmasr" in selected: urls.append(f"https://www.semsarmasr.com/en/properties-for-rent/{city_slug}")
             if "shofaqar" in selected: urls.append(f"https://shofaqar.com/properties-for-rent/{city_slug}")
