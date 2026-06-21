@@ -229,13 +229,20 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
         import re
         c_clean = re.sub(r'\s+', ' ', c_clean)
         
+        from urllib.parse import quote
+        
         city_slug = c_clean.replace(" ", "-").lower() if c_clean else "egypt"
+        encoded_city = quote(city_slug)
+        
+        # Determine if the category is strictly commercial
+        cat = property_category.lower() if property_category else "all"
+        cat_is_commercial = cat in ["warehouse", "shop", "pharmacy", "showroom", "office", "commercial"]
+
         if "facebook" in selected:
             # Build Location
-            location_query = f'"{c}"' if c else '("التجمع الخامس" OR "الشيخ زايد" OR "العاصمة الادارية")'
+            location_query = f'"{c_clean}"' if c_clean else '("التجمع الخامس" OR "الشيخ زايد" OR "العاصمة الادارية")'
             
             # Build Base Keywords depending on target audience & category
-            cat = property_category.lower() if property_category else "all"
             if target_audience == "buyers":
                 base_keywords = ["مطلوب", "عايز اشتري", "عايز اأجر", "رقم التواصل", "ابعتلي خاص"]
                 if cat == "warehouse":
@@ -295,35 +302,52 @@ def build_search_urls(city: str, property_type: str, sites: list[str] = ["all"],
                 chunk = base_keywords[i:i + chunk_size]
                 keyword_group = '("' + '" OR "'.join(chunk) + '")'
                 raw_query = f'site:facebook.com {keyword_group} {intent_group} {location_query}'
+                
+                # Exclude residential cross-contamination if looking for commercial
+                if cat_is_commercial:
+                    raw_query += ' -شقة -شقق -فيلا -عمارة'
+                    
                 urls.append(f"bing:{raw_query}")
 
         # If we extended DEFAULT_SITES above, we don't need to manually append the other sites for an empty city.
         if not c and ("all" in sites or not sites):
             continue
 
-        cat_is_commercial = cat in ["warehouse", "shop", "pharmacy", "showroom", "office", "commercial"]
         pf_cat = "3" if cat_is_commercial else "1"
         dbz_cat = "commercial-for-sale" if cat_is_commercial else "properties-for-sale"
         dbz_rent_cat = "commercial-for-rent" if cat_is_commercial else "properties-for-rent"
         aqar_cat = "commercial" if cat_is_commercial else "property-type"
+        
+        # Explicit commercial routes for secondary portals
+        bayut_cat = "commercial-for-sale" if cat_is_commercial else "properties-for-sale"
+        bayut_rent_cat = "commercial-for-rent" if cat_is_commercial else "properties-for-rent"
+        
+        semsar_cat = "commercial-properties-for-sale" if cat_is_commercial else "properties-for-sale"
+        semsar_rent_cat = "commercial-properties-for-rent" if cat_is_commercial else "properties-for-rent"
+        
+        shof_cat = "commercial-for-sale" if cat_is_commercial else "properties-for-sale"
+        shof_rent_cat = "commercial-for-rent" if cat_is_commercial else "properties-for-rent"
+        
+        realestate_cat = "commercial-for-sale" if cat_is_commercial else "for-sale"
+        realestate_rent_cat = "commercial-for-rent" if cat_is_commercial else "for-rent"
 
         if property_type in ["sale", "both"]:
-            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/{dbz_cat}/q-{city_slug}/")
-            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-sale/{aqar_cat}/{city_slug}/")
-            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c={pf_cat}&t=1&q={city_slug}")
-            if "bayut" in selected: urls.append(f"https://www.bayut.eg/en/{city_slug}/properties-for-sale/")
-            if "semsarmasr" in selected: urls.append(f"https://www.semsarmasr.com/en/properties-for-sale/{city_slug}")
-            if "shofaqar" in selected: urls.append(f"https://shofaqar.com/properties-for-sale/{city_slug}")
-            if "realestate" in selected: urls.append(f"https://realestate.eg/en/for-sale/{city_slug}")
+            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/{dbz_cat}/q-{encoded_city}/")
+            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-sale/{aqar_cat}/{encoded_city}/")
+            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c={pf_cat}&t=1&q={encoded_city}")
+            if "bayut" in selected: urls.append(f"https://www.bayut.eg/en/{encoded_city}/{bayut_cat}/")
+            if "semsarmasr" in selected: urls.append(f"https://www.semsarmasr.com/en/{semsar_cat}/{encoded_city}")
+            if "shofaqar" in selected: urls.append(f"https://shofaqar.com/{shof_cat}/{encoded_city}")
+            if "realestate" in selected: urls.append(f"https://realestate.eg/en/{realestate_cat}/{encoded_city}")
             
         if property_type in ["rent", "both"]:
-            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/{dbz_rent_cat}/q-{city_slug}/")
-            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-rent/{aqar_cat}/{city_slug}/")
-            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c={pf_cat}&t=2&q={city_slug}")
-            if "bayut" in selected: urls.append(f"https://www.bayut.eg/en/{city_slug}/properties-for-rent/")
-            if "semsarmasr" in selected: urls.append(f"https://www.semsarmasr.com/en/properties-for-rent/{city_slug}")
-            if "shofaqar" in selected: urls.append(f"https://shofaqar.com/properties-for-rent/{city_slug}")
-            if "realestate" in selected: urls.append(f"https://realestate.eg/en/for-rent/{city_slug}")
+            if "dubizzle" in selected: urls.append(f"https://www.dubizzle.com.eg/properties/{dbz_rent_cat}/q-{encoded_city}/")
+            if "aqarmap" in selected: urls.append(f"https://aqarmap.com.eg/en/for-rent/{aqar_cat}/{encoded_city}/")
+            if "propertyfinder" in selected: urls.append(f"https://www.propertyfinder.eg/en/search?c={pf_cat}&t=2&q={encoded_city}")
+            if "bayut" in selected: urls.append(f"https://www.bayut.eg/en/{encoded_city}/{bayut_rent_cat}/")
+            if "semsarmasr" in selected: urls.append(f"https://www.semsarmasr.com/en/{semsar_rent_cat}/{encoded_city}")
+            if "shofaqar" in selected: urls.append(f"https://shofaqar.com/{shof_rent_cat}/{encoded_city}")
+            if "realestate" in selected: urls.append(f"https://realestate.eg/en/{realestate_rent_cat}/{encoded_city}")
             
     return list(dict.fromkeys(urls))
 
