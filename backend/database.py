@@ -39,10 +39,8 @@ def get_db() -> Client:
 
 
 def reset_db():
-    """Force-recreate the Supabase client after a connection drop."""
-    global _client
-    _client = None
-    logger.warning("Supabase client reset — reconnecting on next call.")
+    """Returns the existing client instance without dropping it. httpx handles reconnects natively."""
+    logger.info("Supabase client retry requested, maintaining stable global client.")
     return get_db()
 
 
@@ -458,8 +456,17 @@ Return ONLY a valid JSON object strictly matching this schema exactly:
             except Exception as e:
                 logger.error(f"Error fetching user by session (attempt {attempt+1}): {e}")
                 if attempt == 0:
-                    # Connection dropped — reset client and retry once
-                    self.sb = reset_db()
+                    # Supabase/httpx handles transient drops natively; just pause and retry
+                    import asyncio
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # Can't use await here because get_user_by_session is sync
+                        import time
+                        time.sleep(0.5)
+                    except RuntimeError:
+                        import time
+                        time.sleep(0.5)
+                    self.sb = get_db()
                 else:
                     return None
 

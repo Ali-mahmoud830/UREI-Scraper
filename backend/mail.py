@@ -100,7 +100,8 @@ def send_license_email(email_to: str, token: str, tier: str, expires_at: str) ->
         msg.attach(MIMEText(html_content, "html"))
 
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
+        # Added a strict timeout to prevent thread exhaustion on network block
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=5.0) as server:
             server.login(SMTP_USER, SMTP_PASS)
             server.sendmail(SMTP_USER, email_to, msg.as_string())
 
